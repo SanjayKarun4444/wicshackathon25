@@ -1,5 +1,11 @@
-import Image from "next/image";
+'use client'
+
+import Study from './components/study'
 
 export default function Home() {
-  return ();
+  return (
+    <main className="min-h-screen">
+      <Study />
+    </main>
+  )
 }
