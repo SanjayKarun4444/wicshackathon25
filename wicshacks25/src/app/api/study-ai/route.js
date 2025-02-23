@@ -7,40 +7,32 @@ const openai = new OpenAI({
 export async function POST(request) {
   try {
     const { topic, type, pdfContent } = await request.json();
-    
-    // Create a context-aware prompt that includes PDF content
-    const contextPrompt = pdfContent 
-      ? `Using the following document content as reference:\n\n${pdfContent}\n\nCreate a study plan for: ${topic}`
-      : `Create a study plan for: ${topic}`;
 
+    // Construct prompt dynamically based on input availability
+    let prompt = '';
+
+    if (pdfContent && topic) {
+      prompt = `Using the following document content:\n\n${pdfContent}\n\nCreate a ${type} for: ${topic}`;
+    } else if (pdfContent) {
+      prompt = `Based on the following document, generate a ${type}:\n\n${pdfContent}`;
+    } else if (topic) {
+      prompt = `Create a ${type} for: ${topic}`;
+    } else {
+      return new Response(JSON.stringify({ error: 'No valid input provided' }), { status: 400 });
+    }
+
+    // Make API call
     const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [
-        {
-          role: "system",
-          content: "You are a helpful study assistant. Create a detailed study plan and key concepts based on the provided document content and topic."
-        },
-        {
-          role: "user",
-          content: contextPrompt
-        }
-      ],
-      max_tokens: 1000,
-      temperature: 0.7,
+      model: 'gpt-4',
+      messages: [{ role: 'system', content: 'You are an AI study assistant.' }, { role: 'user', content: prompt }],
     });
 
-    return new Response(JSON.stringify(completion.choices[0].message), {
-      headers: {
-        'Content-Type': 'application/json',
-      },
+    return new Response(JSON.stringify({ content: completion.choices[0].message.content }), {
+      headers: { 'Content-Type': 'application/json' }
     });
+
   } catch (error) {
-    console.error('API Error:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    console.error('Error in API route:', error);
+    return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500 });
   }
 }

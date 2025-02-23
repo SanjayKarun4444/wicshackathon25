@@ -36,64 +36,39 @@ const Study = () => {
   }, [isTimerActive, studyTime]);
 
   const generateStudyPlan = async () => {
-  setLoading(true);
-  try {
-    // Generate study plan
-    const response = await fetch('/api/study-ai', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ 
-        topic,
-        type: 'study_plan' 
-      }),
-    });
-
-    // Add error handling for the response
-    const responseClone = await response.clone();
-    let data;
+    setLoading(true);
     try {
-      data = await response.json();
+      let pdfContent = null;
+      
+      // If documents exist, use their content (assuming it was extracted earlier)
+      if (documents.length > 0) {
+        pdfContent = documents.map(doc => doc.content).join('\n\n');
+      }
+  
+      const response = await fetch('/api/study-ai', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          topic,
+          type: 'study_plan',
+          pdfContent // Include document content if available
+        }),
+      });
+  
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to fetch study plan');
+  
+      setStudyPlan(data);
+  
     } catch (error) {
-      const textResponse = await responseClone.text();
-      console.error('Error parsing JSON:', error);
-      console.log('Raw response:', textResponse);
-      throw new Error('Failed to parse response as JSON');
+      console.error('Error in generateStudyPlan:', error);
+      alert('Failed to generate study plan. Please try again.');
     }
-    setStudyPlan(data);
-    
-    // Generate flashcards with error handling
-    const flashcardsResponse = await fetch('/api/study-ai', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ 
-        topic,
-        type: 'flashcards' 
-      }),
-    });
-
-    const flashcardsResponseClone = await flashcardsResponse.clone();
-    let flashcardsData;
-    try {
-      flashcardsData = await flashcardsResponse.json();
-    } catch (error) {
-      const textResponse = await flashcardsResponseClone.text();
-      console.error('Error parsing flashcards JSON:', error);
-      console.log('Raw flashcards response:', textResponse);
-      throw new Error('Failed to parse flashcards response as JSON');
-    }
-    setFlashcards(flashcardsData.flashcards || []);
-
-  } catch (error) {
-    console.error('Error in generateStudyPlan:', error);
-    // You might want to show an error message to the user here
-    alert('Failed to generate study plan. Please try again.');
-  }
-  setLoading(false);
-};
+    setLoading(false);
+  };
+  
 
 
   const handleModeChange = (mode) => {
