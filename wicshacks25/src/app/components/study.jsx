@@ -9,12 +9,15 @@ const Study = () => {
   const [flashcards, setFlashcards] = useState([]);
   const [currentCard, setCurrentCard] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
-  // New state variables
   const [currentMode, setCurrentMode] = useState('focus');
   const [studyTime, setStudyTime] = useState(25 * 60); // 25 minutes in seconds
   const [isTimerActive, setIsTimerActive] = useState(false);
   const [documents, setDocuments] = useState([]);
   const [visualPath, setVisualPath] = useState(null);
+  // New state for flashcard creation
+  const [newQuestion, setNewQuestion] = useState('');
+  const [newAnswer, setNewAnswer] = useState('');
+  const [isAddingCard, setIsAddingCard] = useState(false);
 
   // Timer functionality
   useEffect(() => {
@@ -40,7 +43,7 @@ const Study = () => {
     try {
       let pdfContent = null;
       
-      // If documents exist, use their content (assuming it was extracted earlier)
+      // If documents exist, use their content
       if (documents.length > 0) {
         pdfContent = documents.map(doc => doc.content).join('\n\n');
       }
@@ -68,8 +71,6 @@ const Study = () => {
     }
     setLoading(false);
   };
-  
-
 
   const handleModeChange = (mode) => {
     setCurrentMode(mode);
@@ -109,6 +110,39 @@ const Study = () => {
       setDocuments(analysis);
     } catch (error) {
       console.error('Error analyzing documents:', error);
+    }
+  };
+
+  const handleAddFlashcard = async () => {
+    if (!newQuestion.trim() || !newAnswer.trim()) {
+      alert('Please fill in both question and answer');
+      return;
+    }
+
+    const newCard = {
+      question: newQuestion,
+      answer: newAnswer
+    };
+
+    try {
+      // Optional: Send to backend API
+      // const response = await fetch('/api/flashcards', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify(newCard)
+      // });
+      // const data = await response.json();
+      
+      // Add to local state
+      setFlashcards([...flashcards, newCard]);
+      
+      // Reset form
+      setNewQuestion('');
+      setNewAnswer('');
+      setIsAddingCard(false);
+    } catch (error) {
+      console.error('Error adding flashcard:', error);
+      alert('Failed to add flashcard');
     }
   };
 
@@ -229,6 +263,58 @@ const Study = () => {
           {/* Flashcards Section */}
           <div className="bg-white p-6 rounded-lg shadow-lg">
             <h2 className="text-2xl font-bold mb-4 text-blue-600">Flashcards</h2>
+            
+            {/* Add Flashcard Button */}
+            <button
+              onClick={() => setIsAddingCard(true)}
+              className="mb-4 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg"
+            >
+              Add New Flashcard
+            </button>
+
+            {/* Add Flashcard Form */}
+            {isAddingCard && (
+              <div className="mb-6 p-4 border-2 border-blue-200 rounded-lg">
+                <div className="mb-4">
+                  <label className="block text-sm font-medium mb-2">Question:</label>
+                  <textarea
+                    value={newQuestion}
+                    onChange={(e) => setNewQuestion(e.target.value)}
+                    className="w-full p-2 border rounded-md"
+                    rows="2"
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium mb-2">Answer:</label>
+                  <textarea
+                    value={newAnswer}
+                    onChange={(e) => setNewAnswer(e.target.value)}
+                    className="w-full p-2 border rounded-md"
+                    rows="2"
+                  />
+                </div>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={handleAddFlashcard}
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+                  >
+                    Save Card
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsAddingCard(false);
+                      setNewQuestion('');
+                      setNewAnswer('');
+                    }}
+                    className="bg-gray-300 hover:bg-gray-400 px-4 py-2 rounded"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Existing Flashcards Display */}
             {flashcards.length > 0 && (
               <div className="relative">
                 <motion.div
@@ -245,7 +331,6 @@ const Study = () => {
                   </div>
                 </motion.div>
 
-                {/* Navigation Buttons */}
                 <div className="flex justify-between mt-4">
                   <button
                     onClick={prevCard}
