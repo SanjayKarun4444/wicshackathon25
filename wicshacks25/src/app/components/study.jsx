@@ -317,19 +317,35 @@ const Study = () => {
             {/* Existing Flashcards Display */}
             {flashcards.length > 0 && (
               <div className="relative">
-                <motion.div
-                  className="bg-white p-6 rounded-lg border-2 border-blue-200 min-h-[200px] flex items-center justify-center cursor-pointer"
-                  animate={{ rotateY: isFlipped ? 180 : 0 }}
-                  transition={{ duration: 0.6 }}
-                  onClick={flipCard}
-                >
-                  <div className={`${isFlipped ? 'hidden' : 'block'}`}>
-                    <p className="text-xl">{flashcards[currentCard]?.question}</p>
-                  </div>
-                  <div className={`${!isFlipped ? 'hidden' : 'block'} transform rotate-180`}>
-                    <p className="text-xl">{flashcards[currentCard]?.answer}</p>
-                  </div>
-                </motion.div>
+                <div className="relative h-[200px] w-full">
+                  <motion.div
+                    className="absolute w-full h-full"
+                    animate={{ rotateY: isFlipped ? 180 : 0 }}
+                    transition={{ duration: 0.6 }}
+                    style={{ transformStyle: 'preserve-3d' }}
+                  >
+                    {/* Front of card */}
+                    <div 
+                      className="absolute w-full h-full bg-white p-6 rounded-lg border-2 border-blue-200 flex items-center justify-center cursor-pointer"
+                      style={{ backfaceVisibility: 'hidden' }}
+                      onClick={flipCard}
+                    >
+                      <p className="text-xl">{flashcards[currentCard]?.question}</p>
+                    </div>
+                    
+                    {/* Back of card */}
+                    <div 
+                      className="absolute w-full h-full bg-white p-6 rounded-lg border-2 border-blue-200 flex items-center justify-center cursor-pointer"
+                      style={{ 
+                        backfaceVisibility: 'hidden',
+                        transform: 'rotateY(180deg)'
+                      }}
+                      onClick={flipCard}
+                    >
+                      <p className="text-xl">{flashcards[currentCard]?.answer}</p>
+                    </div>
+                  </motion.div>
+                </div>
 
                 <div className="flex justify-between mt-4">
                   <button
